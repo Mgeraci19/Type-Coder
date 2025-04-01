@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--background-start-rgb)),
+    rgb(var(--background-end-rgb))
+  );
+  min-height: 100vh;
+}
+
+.code-editor {
+  font-family: 'Fira Code', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  tab-size: 2;
+}
+
+.error-highlight {
+  background-color: rgba(239, 68, 68, 0.2);
+  border-bottom: 2px solid rgb(239, 68, 68);
+}
+
+.success-highlight {
+  background-color: rgba(34, 197, 94, 0.2);
+  border-bottom: 2px solid rgb(34, 197, 94);
+}
+
+/* Overlay styles */
+.overlay-text {
+  position: absolute;
+  font-family: 'Fira Code', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre;
+  pointer-events: none;
+}
+
+/* Keyboard styles */
+.keyboard-key {
+  transition: all 0.1s ease-in-out;
+}
+
+.keyboard-key.active {
+  transform: scale(0.95);
+} 
