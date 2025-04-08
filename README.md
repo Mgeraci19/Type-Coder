@@ -46,7 +46,7 @@ npm run dev
 
 ## Deployment
 
-This project is optimized for deployment on Vercel. Simply connect your GitHub repository to Vercel and it will automatically deploy your application.
+This Project is deployed on github pages
 
 ## Contributing
 
