@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import ChallengeCard from '@/components/ChallengeCard';
+import Sidebar from '@/components/Sidebar';
 import CodeEditor from '@/components/CodeEditor';
 import Keyboard from '@/components/Keyboard';
-import StatsDisplay from '@/components/StatsDisplay';
-import { useTypingStats } from '@/hooks/useTypingStats';
 
 interface Challenge {
   title: string;
@@ -37,41 +35,49 @@ export default function Home() {
   const [currentChallenge, setCurrentChallenge] = useState<Challenge>(sampleChallenge);
   const [userInput, setUserInput] = useState('');
   const [pressedKey, setPressedKey] = useState<string | null>(null);
-  const { stats, handleInputChange } = useTypingStats(currentChallenge.solution);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Handle special keys
-      if (e.key === 'Backspace') {
-        setUserInput(prev => prev.slice(0, -1));
-        return;
-      }
-      if (e.key === 'Enter') {
-        setUserInput(prev => prev + '\n');
-        return;
-      }
+      // Prevent default behavior for Tab
       if (e.key === 'Tab') {
         e.preventDefault();
-        setUserInput(prev => prev + '    ');
-        return;
       }
 
-      // Handle regular characters
-      if (e.key.length === 1) {
-        setPressedKey(e.key);
-        setUserInput(prev => prev + e.key);
+      // Set the pressed key for visual feedback
+      let keyToShow = e.key;
+      
+      // Handle special keys
+      switch (e.key) {
+        case 'Backspace':
+          setUserInput(prev => prev.slice(0, -1));
+          break;
+        case 'Enter':
+          setUserInput(prev => prev + '\n');
+          break;
+        case 'Tab':
+          setUserInput(prev => prev + '    ');
+          break;
+        case 'Control':
+          keyToShow = 'Ctrl';
+          break;
+        case ' ':
+          setUserInput(prev => prev + ' ');
+          break;
+        default:
+          // Handle regular characters including symbols
+          if (e.key.length === 1) {
+            setUserInput(prev => prev + e.key);
+          }
       }
+
+      setPressedKey(keyToShow);
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  // Update stats when userInput changes
-  useEffect(() => {
-    handleInputChange(userInput);
-  }, [userInput, handleInputChange]);
 
   // Focus the textarea when the component mounts
   useEffect(() => {
@@ -81,36 +87,44 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-4xl font-bold mb-12 text-center">TypeCoder</h1>
+    <div className="min-h-screen bg-gray-900">
+      <div className="bg-gray-800 text-white py-8 shadow-lg">
+        <h1 className="text-5xl font-bold text-center tracking-tight">
+          Type<span className="text-blue-400">Coder</span>
+        </h1>
+        <p className="text-gray-300 text-center mt-2 text-lg">
+          Master your typing skills through coding challenges
+        </p>
+      </div>
       
-      <div className="flex flex-col gap-16">
-        <div className="flex flex-col gap-4">
-          <ChallengeCard
+      <div className="flex justify-center max-w-[1600px] mx-auto relative px-4 py-8">
+        <div className="flex gap-6 w-full">
+          <Sidebar
+            isOpen={isSidebarOpen}
+            onToggle={() => setIsSidebarOpen(prev => !prev)}
             title={currentChallenge.title}
             description={currentChallenge.description}
             difficulty={currentChallenge.difficulty}
           />
-        </div>
 
-        <div className="flex flex-col gap-4">
-          <CodeEditor
-            solution={currentChallenge.solution}
-            userInput={userInput}
-            onInputChange={setUserInput}
-            textareaRef={textareaRef}
-          />
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <Keyboard 
-            pressedKey={pressedKey} 
-            isCorrect={pressedKey ? userInput[userInput.length - 1] === currentChallenge.solution[userInput.length - 1] : false} 
-          />
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <StatsDisplay {...stats} />
+          {/* Main content area */}
+          <main className="flex-grow flex flex-col gap-8 bg-gray-800 rounded-lg p-6 shadow-lg">
+            <div className="flex items-center justify-center">
+              <CodeEditor
+                solution={currentChallenge.solution}
+                userInput={userInput}
+                onInputChange={setUserInput}
+                textareaRef={textareaRef}
+              />
+            </div>
+            
+            <div className="border-t border-gray-700 pt-8">
+              <Keyboard 
+                pressedKey={pressedKey} 
+                isCorrect={pressedKey ? userInput[userInput.length - 1] === currentChallenge.solution[userInput.length - 1] : false} 
+              />
+            </div>
+          </main>
         </div>
       </div>
     </div>

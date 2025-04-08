@@ -6,17 +6,19 @@ interface ChallengeCardProps {
 
 const ChallengeCard = ({ title, description, difficulty }: ChallengeCardProps) => {
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+    <div className="w-[300px] bg-gray-800 text-white rounded-lg shadow-lg p-6 transition-all duration-300">
       <h2 className="text-2xl font-semibold mb-2">{title}</h2>
-      <p className="text-gray-600 mb-4">{description}</p>
-      <div className="flex items-center gap-2 mb-4">
-        <span className={`px-2 py-1 rounded text-sm ${
-          difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
-          difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-          'bg-red-100 text-red-800'
+      <div className="mb-6">
+        <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+          difficulty === 'Easy' ? 'bg-green-500 text-white' :
+          difficulty === 'Medium' ? 'bg-yellow-500 text-white' :
+          'bg-red-500 text-white'
         }`}>
           {difficulty}
         </span>
+      </div>
+      <div className="prose prose-invert prose-sm max-w-none">
+        <p className="text-gray-300 leading-relaxed">{description}</p>
       </div>
     </div>
   );

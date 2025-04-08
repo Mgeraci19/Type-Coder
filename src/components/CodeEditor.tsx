@@ -1,6 +1,4 @@
 import { useRef, useEffect, useState } from 'react';
-import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface CodeEditorProps {
   solution: string;
@@ -9,72 +7,60 @@ interface CodeEditorProps {
   textareaRef: React.RefObject<HTMLTextAreaElement>;
 }
 
-const CodeEditor = ({ solution, userInput, onInputChange, textareaRef }: CodeEditorProps) => {
-  const [lineHeight, setLineHeight] = useState(20);
-  const [charWidth, setCharWidth] = useState(8);
+export default function CodeEditor({ solution, userInput, onInputChange, textareaRef }: CodeEditorProps) {
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     if (textareaRef.current) {
-      const computedStyle = window.getComputedStyle(textareaRef.current);
-      setLineHeight(parseFloat(computedStyle.lineHeight));
-      setCharWidth(parseFloat(computedStyle.fontSize) * 0.6);
+      const tempDiv = document.createElement('div');
+      tempDiv.style.visibility = 'hidden';
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.whiteSpace = 'pre-wrap';
+      tempDiv.style.fontFamily = 'monospace';
+      tempDiv.style.fontSize = '14px';
+      tempDiv.style.lineHeight = '1.5';
+      tempDiv.textContent = solution;
+      document.body.appendChild(tempDiv);
+      
+      setDimensions({
+        width: tempDiv.offsetWidth,
+        height: tempDiv.offsetHeight
+      });
+      
+      document.body.removeChild(tempDiv);
     }
-  }, [textareaRef]);
-
-  const getPosition = (index: number) => {
-    const lines = solution.slice(0, index).split('\n');
-    const currentLine = lines.length - 1;
-    const currentLineIndex = lines[currentLine].length;
-    
-    return {
-      left: `${currentLineIndex * charWidth}px`,
-      top: `${currentLine * lineHeight}px`,
-    };
-  };
+  }, [solution, textareaRef]);
 
   return (
-    <div className="relative mb-12">
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="text-lg font-semibold mb-2">Solution Template</h3>
-        <div className="relative min-h-[200px]">
-          <div className="absolute top-0 left-0 w-full h-full pointer-events-none p-4">
-            {solution.split('').map((char, index) => {
-              const isTyped = index < userInput.length;
-              const isCorrect = isTyped && userInput[index] === char;
-              const position = getPosition(index);
-              
-              return (
-                <span
-                  key={index}
-                  className="absolute font-mono"
-                  style={{
-                    ...position,
-                    backgroundColor: isTyped ? (isCorrect ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)') : 'transparent',
-                    borderBottom: isTyped ? `2px solid ${isCorrect ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)'}` : 'none',
-                  }}
-                >
-                  {isTyped ? userInput[index] : char}
-                </span>
-              );
-            })}
-          </div>
-          {/* <textarea
-            ref={textareaRef}
-            value={userInput}
-            onChange={(e) => onInputChange(e.target.value)}
-            className="absolute top-0 left-0 w-full h-full p-4 font-mono text-sm bg-transparent resize-none outline-none"
-            style={{ 
-              caretColor: 'transparent',
-              fontSize: '14px',
-              lineHeight: '1.5',
-              padding: '1rem',
-            }}
-
-          /> */}
-        </div>
-      </div>
+    <div className="relative" style={{ width: dimensions.width, height: dimensions.height }}>
+      {/* Solution display */}
+      <pre className="font-mono text-sm text-gray-400 whitespace-pre-wrap">
+        {solution}
+      </pre>
+      
+      {/* User input overlay */}
+      <textarea
+        ref={textareaRef}
+        value={userInput}
+        onChange={(e) => onInputChange(e.target.value)}
+        className="absolute inset-0 w-full h-full font-mono text-sm bg-transparent text-transparent caret-white resize-none focus:outline-none"
+        spellCheck="false"
+      />
+      
+      {/* User input display */}
+      <pre className="absolute inset-0 font-mono text-sm whitespace-pre-wrap">
+        {userInput.split('').map((char, index) => {
+          const isCorrect = char === solution[index];
+          return (
+            <span
+              key={index}
+              className={`${isCorrect ? 'text-green-400' : 'text-red-500'}`}
+            >
+              {char}
+            </span>
+          );
+        })}
+      </pre>
     </div>
   );
-};
-
-export default CodeEditor; 
+} 

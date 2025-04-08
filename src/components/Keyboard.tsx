@@ -1,87 +1,115 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface KeyboardProps {
   pressedKey: string | null;
   isCorrect: boolean;
 }
 
-const Keyboard = ({ pressedKey, isCorrect }: KeyboardProps) => {
-  const [activeKeys, setActiveKeys] = useState<Set<string>>(new Set());
-  const [keyStates, setKeyStates] = useState<Map<string, 'correct' | 'incorrect' | null>>(new Map());
+export default function Keyboard({ pressedKey, isCorrect }: KeyboardProps) {
+  const keyRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   useEffect(() => {
     if (pressedKey) {
-      const key = pressedKey.toLowerCase();
-      // Add the key to active keys
-      setActiveKeys(prev => {
-        const newSet = new Set(prev);
-        newSet.add(key);
-        return newSet;
-      });
+      // Handle special keys mapping
+      const keyMap: { [key: string]: string } = {
+        'Tab': 'Tab',
+        'Backspace': 'Backspace',
+        'Enter': 'Enter',
+        'Control': 'Ctrl',
+        ' ': ' '
+      };
 
-      // Set the key state (correct/incorrect)
-      setKeyStates(prev => {
-        const newMap = new Map(prev);
-        newMap.set(key, isCorrect ? 'correct' : 'incorrect');
-        return newMap;
-      });
-
-      // Remove the key after animation
-      const timer = setTimeout(() => {
-        setActiveKeys(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(key);
-          return newSet;
-        });
-        setKeyStates(prev => {
-          const newMap = new Map(prev);
-          newMap.delete(key);
-          return newMap;
-        });
-      }, 200);
-
-      return () => clearTimeout(timer);
+      // Use the mapped key or convert to lowercase
+      const key = keyMap[pressedKey] || pressedKey.toLowerCase();
+      const keyElement = keyRefs.current.get(key);
+      
+      if (keyElement) {
+        // Remove any existing animation classes
+        keyElement.classList.remove('animate-keypress-correct', 'animate-keypress-incorrect');
+        
+        // Force a reflow to ensure the animation restarts
+        void keyElement.offsetWidth;
+        
+        // Add the appropriate animation class
+        keyElement.classList.add(
+          isCorrect ? 'animate-keypress-correct' : 'animate-keypress-incorrect'
+        );
+      }
     }
   }, [pressedKey, isCorrect]);
 
-  const keys = [
-    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
-    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
-    ['z', 'x', 'c', 'v', 'b', 'n', 'm'],
-    [' ']
+  const rows = [
+    ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Backspace'],
+    ['Tab', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\\'],
+    ['Caps', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', "'", 'Enter'],
+    ['Shift', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 'Shift'],
+    ['Ctrl', 'Alt', ' ', 'Alt', 'Ctrl']
   ];
 
-  const getKeyStyle = (key: string) => {
-    if (activeKeys.has(key)) {
-      const state = keyStates.get(key);
-      if (state === 'correct') {
-        return 'bg-green-500 text-white';
-      } else if (state === 'incorrect') {
-        return 'bg-red-500 text-white';
-      }
-      return 'bg-primary text-white';
+  const getKeyWidth = (key: string) => {
+    switch (key) {
+      case 'Tab':
+      case '\\':
+      case 'Caps':
+      case 'Enter':
+      case 'Shift':
+        return 'w-16';
+      case 'Backspace':
+        return 'w-24';
+      case ' ':
+        return 'w-64';
+      case 'Ctrl':
+      case 'Alt':
+        return 'w-12';
+      default:
+        return 'w-8';
     }
-    return 'bg-white text-gray-700 shadow-sm';
+  };
+
+  const getKeyDisplay = (key: string) => {
+    switch (key) {
+      case ' ':
+        return 'Space';
+      case '\\':
+        return '\\';
+      case 'Backspace':
+        return '⌫';
+      case 'Enter':
+        return '⏎';
+      default:
+        return key;
+    }
   };
 
   return (
-    <div className="bg-gray-100 rounded-lg p-4">
-      {keys.map((row, rowIndex) => (
-        <div key={rowIndex} className="flex justify-center gap-1 mb-1">
-          {row.map((key, keyIndex) => (
-            <div
-              key={keyIndex}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-100 ${getKeyStyle(key)} ${
-                key === ' ' ? 'w-32' : 'w-8'
-              }`}
-            >
-              {key}
-            </div>
-          ))}
-        </div>
-      ))}
+    <div className="bg-gray-800 rounded-lg p-4 shadow-lg">
+      <div className="flex flex-col gap-2">
+        {rows.map((row, rowIndex) => (
+          <div key={rowIndex} className="flex gap-1 justify-center">
+            {row.map((key) => {
+              const isPressed = pressedKey?.toLowerCase() === key.toLowerCase();
+              const isSpecialKey = ['Tab', 'Caps', 'Shift', 'Ctrl', 'Alt', 'Backspace', 'Enter'].includes(key);
+              
+              return (
+                <div
+                  key={key}
+                  ref={(el) => {
+                    if (el) keyRefs.current.set(key, el);
+                    else keyRefs.current.delete(key);
+                  }}
+                  className={`${getKeyWidth(key)} h-12 flex items-center justify-center rounded
+                    ${isSpecialKey ? 'bg-gray-700' : 'bg-gray-600'}
+                    ${isPressed ? (isCorrect ? 'bg-green-500' : 'bg-red-500') : ''}
+                    text-gray-200 font-mono text-sm
+                    transition-colors duration-100`}
+                >
+                  {getKeyDisplay(key)}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </div>
   );
-};
-
-export default Keyboard; 
+} 
